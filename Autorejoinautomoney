@@ -1,0 +1,40 @@
+-- Auto Money Script with Auto Rejoin
+
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local rejoinLink = "https://raw.githubusercontent.com/Marco8642/science/main/taxi%20boss%20main"
+
+-- Function to collect money automatically
+local function collectMoney()
+    while wait(1) do  -- Adjust the wait time based on how fast you want to collect
+        pcall(function()
+            -- Insert code here that handles money collection in the game
+            -- For example:
+            print("Collecting money for player: "..player.Name)
+        end)
+    end
+end
+
+-- Function to handle auto rejoin
+local function autoRejoin()
+    local success, response = pcall(function()
+        return game:HttpGet(rejoinLink)
+    end)
+    if success then
+        loadstring(response)()
+    else
+        warn("Failed to load rejoin script: " .. tostring(response))
+    end
+end
+
+-- Detect player leaving (simulated rejoin)
+Players.PlayerRemoving:Connect(function(removedPlayer)
+    if removedPlayer == player then
+        print("Player is leaving the game, attempting to rejoin...")
+        autoRejoin()  -- Call auto rejoin when player leaves
+    end
+end)
+
+-- Start auto money collection when the game starts
+collectMoney()
