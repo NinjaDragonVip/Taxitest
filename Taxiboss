@@ -18,13 +18,13 @@ ScreenGui.Parent = game:GetService("CoreGui")
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 Frame.Parent = ScreenGui
-Frame.AnchorPoint = Vector2.new(0.200000003, 0.200000003)
+Frame.AnchorPoint = Vector2.new(0.5, 0.5) -- แก้ไข AnchorPoint ให้อยู่ตรงกลาง
 Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 Frame.BackgroundTransparency = 0.250
 Frame.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Frame.BorderSizePixel = 0
 Frame.ClipsDescendants = true
-Frame.Position = UDim2.new(0.37719968, 0, 0.289203078, 0)
+Frame.Position = UDim2.new(0.5, 0, 0.5, 0) -- แก้ไข Position ให้อยู่ตรงกลาง
 Frame.Size = UDim2.new(0, 400, 0, 259)
 
 UICorner.Parent = Frame
@@ -50,7 +50,7 @@ TextLabel_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
 TextLabel_2.Position = UDim2.new(0.147499993, 0, 0.250965238, 0)
 TextLabel_2.Size = UDim2.new(0, 282, 0, 109)
 TextLabel_2.Font = Enum.Font.FredokaOne
-TextLabel_2.Text = "Use script at  your  own risk i am not responsible for any accounts banned using my script. Note always exploit in private servers!"
+TextLabel_2.Text = "Use script at your own risk. I am not responsible for any accounts banned using my script. Note: Always exploit in private servers!"
 TextLabel_2.TextColor3 = Color3.fromRGB(255, 255, 255)
 TextLabel_2.TextSize = 20.000
 TextLabel_2.TextWrapped = true
@@ -81,8 +81,15 @@ local function WSDES_fake_script() -- TextButton.LocalScript
 		frame:TweenPosition(UDim2.new(1,0,1,0),Enum.EasingDirection.InOut,Enum.EasingStyle.Quart,2)
 		task.wait(3)
 		frame.Parent:Destroy()
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/Marco8642/science/main/taxi%20boss%20main"))()
+
+		-- ตรวจสอบการโหลด URL ของสคริปต์ก่อนเรียกใช้
+		local success, result = pcall(function()
+			return loadstring(game:HttpGet("https://raw.githubusercontent.com/Marco8642/science/main/taxi%20boss%20main"))()
+		end)
+		if not success then
+			warn("Error loading script: "..tostring(result))
+		end
 	end)
-	
 end
+
 coroutine.wrap(WSDES_fake_script)()
