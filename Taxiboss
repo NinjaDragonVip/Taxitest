@@ -18,13 +18,13 @@ ScreenGui.Parent = game:GetService("CoreGui")
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 Frame.Parent = ScreenGui
-Frame.AnchorPoint = Vector2.new(0.5, 0.5) -- แก้ไข AnchorPoint ให้อยู่ตรงกลาง
+Frame.AnchorPoint = Vector2.new(0.5, 0.5) -- ทำให้ Frame อยู่ตรงกลางจอ
 Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 Frame.BackgroundTransparency = 0.250
 Frame.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Frame.BorderSizePixel = 0
 Frame.ClipsDescendants = true
-Frame.Position = UDim2.new(0.5, 0, 0.5, 0) -- แก้ไข Position ให้อยู่ตรงกลาง
+Frame.Position = UDim2.new(0.5, 0, 0.5, 0) -- ปรับ Position ให้ตรงกลาง
 Frame.Size = UDim2.new(0, 400, 0, 259)
 
 UICorner.Parent = Frame
@@ -72,12 +72,27 @@ UICorner_3.Parent = TextButton
 
 -- Scripts:
 
+local function BoostFPS() -- เพิ่มฟังก์ชัน Boost FPS
+    -- ลดการแสดงผลที่ไม่จำเป็นเพื่อเพิ่ม FPS
+    settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 -- ตั้งค่าให้กราฟิกต่ำสุด
+    for _, child in pairs(game:GetDescendants()) do
+        if child:IsA("BasePart") then
+            child.Material = Enum.Material.SmoothPlastic -- เปลี่ยนวัสดุเป็น SmoothPlastic เพื่อประหยัดการประมวลผล
+        end
+        if child:IsA("Decal") or child:IsA("Texture") then
+            child:Destroy() -- ลบเอฟเฟกต์ภาพที่ไม่จำเป็น
+        end
+    end
+    print("FPS Boosted!")
+end
+
 local function WSDES_fake_script() -- TextButton.LocalScript 
 	local script = Instance.new('LocalScript', TextButton)
 
 	local button = script.Parent
 	local frame = button.Parent
 	button.MouseButton1Down:Connect(function()
+		-- เคลื่อนย้าย Frame ออกไปจากหน้าจอ
 		frame:TweenPosition(UDim2.new(1,0,1,0),Enum.EasingDirection.InOut,Enum.EasingStyle.Quart,2)
 		task.wait(3)
 		frame.Parent:Destroy()
@@ -86,10 +101,15 @@ local function WSDES_fake_script() -- TextButton.LocalScript
 		local success, result = pcall(function()
 			return loadstring(game:HttpGet("https://raw.githubusercontent.com/Marco8642/science/main/taxi%20boss%20main"))()
 		end)
-		if not success then
-			warn("Error loading script: "..tostring(result))
+		if success then
+			print("Script loaded successfully.")
+		else
+			warn("Error loading script: "..tostring(result)) -- แสดงผลเมื่อมีข้อผิดพลาด
 		end
 	end)
 end
 
 coroutine.wrap(WSDES_fake_script)()
+
+-- เรียกใช้ฟังก์ชัน BoostFPS อัตโนมัติเมื่อสคริปต์ทำงาน
+BoostFPS()
