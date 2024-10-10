@@ -70,7 +70,36 @@ TextButton.TextSize = 18.000 -- ลดขนาดข้อความในป
 
 UICorner_3.Parent = TextButton
 
--- Scripts:
+-- Variables
+local webhookURL = "YOUR_WEBHOOK_URL_HERE" -- เปลี่ยนเป็น URL ของ webhook ของคุณ
+
+-- Functions
+
+local function getMoneyAndTrophies()
+    local player = game.Players.LocalPlayer
+    local money = player:FindFirstChild("Money") and player.Money.Value or 0 -- ดึงจำนวนเงิน
+    local trophies = player:FindFirstChild("Trophies") and player.Trophies.Value or 0 -- ดึงจำนวนถ้วยรางวัล
+    return money, trophies
+end
+
+local function sendWebhookNotification()
+    local HttpService = game:GetService("HttpService")
+    local money, trophies = getMoneyAndTrophies() -- เรียกดูจำนวนเงินและถ้วยรางวัล
+    local data = {
+        content = string.format("Script is running smoothly.\nCurrent Money: %d\nCurrent Trophies: %d", money, trophies)
+    }
+    local jsonData = HttpService:JSONEncode(data)
+
+    local success, response = pcall(function()
+        return HttpService:PostAsync(webhookURL, jsonData, Enum.HttpContentType.ApplicationJson)
+    end)
+
+    if success then
+        print("Webhook notification sent successfully.")
+    else
+        warn("Error sending webhook notification: " .. response)
+    end
+end
 
 local function BoostFPS() -- เพิ่มฟังก์ชัน Boost FPS
     -- ลดการแสดงผลที่ไม่จำเป็นเพื่อเพิ่ม FPS
@@ -105,7 +134,7 @@ local function WSDES_fake_script() -- TextButton.LocalScript
 
 		-- ตรวจสอบการโหลด URL ของสคริปต์ก่อนเรียกใช้
 		local success, result = pcall(function()
-			return loadstring(game:HttpGet("https://raw.githubusercontent.com/Marco8642/science/main/taxi%20boss%20main"))()
+			return loadstring(game:HttpGet("https://raw.githubusercontent.com/NinjaDragonVip/Taxitest/refs/heads/main/Normal%20but%20low%20gpu"))()
 		end)
 		if success then
 			print("Script loaded successfully.")
@@ -119,3 +148,9 @@ coroutine.wrap(WSDES_fake_script)()
 
 -- เรียกใช้ฟังก์ชัน BoostFPS อัตโนมัติเมื่อสคริปต์ทำงาน
 BoostFPS()
+
+-- ฟังก์ชันสำหรับการแจ้งเตือนทุก ๆ 10 นาที
+while true do
+    task.wait(600) -- รอ 10 นาที (600 วินาที)
+    sendWebhookNotification() -- ส่งการแจ้งเตือน
+end
