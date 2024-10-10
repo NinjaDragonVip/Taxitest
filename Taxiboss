@@ -124,7 +124,7 @@ local function WSDES_fake_script()
 	button.MouseButton1Down:Connect(function()
 		frame:TweenPosition(UDim2.new(1, 0, 1, 0), Enum.EasingDirection.InOut, Enum.EasingStyle.Quart, 0.5)
 		task.wait(0.5)
-		frame.Parent:Destroy()
+		frame:Destroy() -- ลบ Frame หลังจากที่ทำการเคลื่อนที่
         LoadScript() -- เรียกใช้ฟังก์ชันโหลดสคริปต์
 	end)
 end
