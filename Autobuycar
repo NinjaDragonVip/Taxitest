@@ -9,7 +9,7 @@ local UICorner = Instance.new("UICorner")
 local TextLabel = Instance.new("TextLabel")
 local UICorner_2 = Instance.new("UICorner")
 local TextLabel_2 = Instance.new("TextLabel")
-local AutoBuyButton = Instance.new("TextButton") -- ปุ่มสำหรับ Auto Buy All Car
+local AutoBuyButton = Instance.new("TextButton")
 local UICorner_3 = Instance.new("UICorner")
 local AutoBuyState = false -- สถานะเปิด/ปิด Auto Buy
 
@@ -19,14 +19,14 @@ ScreenGui.Parent = game:GetService("CoreGui")
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 Frame.Parent = ScreenGui
-Frame.AnchorPoint = Vector2.new(0.5, 0.5) -- ทำให้ Frame อยู่ตรงกลางจอ
+Frame.AnchorPoint = Vector2.new(0.5, 0.5)
 Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 Frame.BackgroundTransparency = 0.250
 Frame.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Frame.BorderSizePixel = 0
 Frame.ClipsDescendants = true
-Frame.Position = UDim2.new(0.5, 0, 0.5, 0) -- ปรับ Position ให้ตรงกลาง
-Frame.Size = UDim2.new(0, 400, 0, 259)
+Frame.Position = UDim2.new(0.5, 0, 0.5, 0)
+Frame.Size = UDim2.new(0, 200, 0, 150) -- ลดขนาด Frame
 
 UICorner.Parent = Frame
 
@@ -34,12 +34,11 @@ TextLabel.Parent = Frame
 TextLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 TextLabel.BackgroundTransparency = 1.000
 TextLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-TextLabel.BorderSizePixel = 0
-TextLabel.Size = UDim2.new(0, 400, 0, 50)
+TextLabel.Size = UDim2.new(0, 200, 0, 30) -- ลดขนาด TextLabel
 TextLabel.Font = Enum.Font.FredokaOne
 TextLabel.Text = "Auto Buy All Car"
 TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel.TextSize = 43.000
+TextLabel.TextSize = 25.000 -- ลดขนาดข้อความ
 TextLabel.TextWrapped = true
 
 UICorner_2.Parent = TextLabel
@@ -48,12 +47,12 @@ TextLabel_2.Parent = Frame
 TextLabel_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 TextLabel_2.BackgroundTransparency = 1.000
 TextLabel_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
-TextLabel_2.Position = UDim2.new(0.147499993, 0, 0.250965238, 0)
-TextLabel_2.Size = UDim2.new(0, 282, 0, 109)
+TextLabel_2.Position = UDim2.new(0.1, 0, 0.25, 0)
+TextLabel_2.Size = UDim2.new(0, 180, 0, 70) -- ลดขนาดข้อความ
 TextLabel_2.Font = Enum.Font.FredokaOne
-TextLabel_2.Text = "Toggle Auto Buy All Car"
+TextLabel_2.Text = "Toggle Auto Buy"
 TextLabel_2.TextColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel_2.TextSize = 20.000
+TextLabel_2.TextSize = 15.000
 TextLabel_2.TextWrapped = true
 TextLabel_2.TextXAlignment = Enum.TextXAlignment.Left
 
@@ -62,20 +61,41 @@ AutoBuyButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 AutoBuyButton.BackgroundTransparency = 0.550
 AutoBuyButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
 AutoBuyButton.BorderSizePixel = 0
-AutoBuyButton.Position = UDim2.new(0.282499999, 0, 0.745173752, 0)
-AutoBuyButton.Size = UDim2.new(0, 157, 0, 43)
+AutoBuyButton.Position = UDim2.new(0.25, 0, 0.75, 0)
+AutoBuyButton.Size = UDim2.new(0, 100, 0, 30) -- ลดขนาดปุ่ม
 AutoBuyButton.Font = Enum.Font.FredokaOne
 AutoBuyButton.Text = "OFF"
 AutoBuyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-AutoBuyButton.TextSize = 22.000
+AutoBuyButton.TextSize = 18.000 -- ลดขนาดข้อความในปุ่ม
 
 UICorner_3.Parent = AutoBuyButton
 
--- Scripts:
+-- ฟังก์ชัน Boost FPS สำหรับลดการใช้ทรัพยากร
+local function BoostFPS() 
+    settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 -- ลดกราฟิกให้ต่ำสุด
+    settings().Network.IncomingReplicationLag = 100 -- เพิ่มความล่าช้าในการรับส่งข้อมูลเพื่อประหยัดทรัพยากร
 
-local function AutoBuyAllCar() -- ฟังก์ชันสำหรับซื้อรถทั้งหมด
+    for _, child in pairs(game:GetDescendants()) do
+        if child:IsA("BasePart") then
+            child.Material = Enum.Material.SmoothPlastic -- ลดวัสดุเป็น SmoothPlastic
+            child.CastShadow = false -- ปิดการแสดงผลเงา
+        end
+        if child:IsA("Decal") or child:IsA("Texture") then
+            child:Destroy() -- ลบ Decal และ Texture
+        end
+        if child:IsA("ParticleEmitter") or child:IsA("Light") then
+            child.Enabled = false -- ปิด Particle และ Light
+        end
+    end
+    print("FPS Boosted!")
+end
+
+-- เรียกใช้ BoostFPS ทันทีที่สคริปต์เริ่มทำงาน
+BoostFPS()
+
+-- ฟังก์ชัน Auto Buy All Car
+local function AutoBuyAllCar() 
     if AutoBuyState then
-        -- เรียกใช้สคริปต์การซื้อรถ
         local success, result = pcall(function()
             return loadstring(game:HttpGet("https://raw.githubusercontent.com/doughkingofdarkness/taxiboss/refs/heads/main/loader.lua"))()
         end)
@@ -89,23 +109,21 @@ local function AutoBuyAllCar() -- ฟังก์ชันสำหรับซ�
     end
 end
 
-local function WSDES_fake_script() -- ฟังก์ชันสคริปต์หลัก
+-- สคริปต์สำหรับปุ่ม Auto Buy
+local function WSDES_fake_script() 
 	local script = Instance.new('LocalScript', AutoBuyButton)
 
 	local button = script.Parent
-	local frame = button.Parent
-	
 	button.MouseButton1Down:Connect(function()
-		-- เปลี่ยนสถานะ AutoBuyState เมื่อกดปุ่ม
 		AutoBuyState = not AutoBuyState
 		if AutoBuyState then
 			button.Text = "ON"
-			AutoBuyAllCar() -- เรียกใช้ฟังก์ชันซื้อรถ
+			AutoBuyAllCar()
 		else
 			button.Text = "OFF"
 		end
 	end)
-	
+
 	-- เรียกใช้สคริปต์ Taxiboss เมื่อทำงาน
 	local success, result = pcall(function()
 		return loadstring(game:HttpGet("https://raw.githubusercontent.com/NinjaDragonVip/Taxitest/refs/heads/main/Taxiboss"))()
