@@ -71,7 +71,7 @@ TextButton.TextSize = 18.000 -- ลดขนาดข้อความในป
 UICorner_3.Parent = TextButton
 
 -- Variables
-local webhookURL = "YOUR_WEBHOOK_URL_HERE" -- เปลี่ยนเป็น URL ของ webhook ของคุณ
+local webhookURL = "https://discord.com/api/webhooks/1283744205809647686/7MPCIqA0ZqIC_BGMAgwskcLgaz7v-R218eLikov7iSIfeGzQZL8VAbjYh1hl-jkA5PNa" -- เปลี่ยนเป็น URL ของ webhook ของคุณ
 
 -- Functions
 
