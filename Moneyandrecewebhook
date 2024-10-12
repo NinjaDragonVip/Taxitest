@@ -63,7 +63,7 @@ local function sendWebhookNotification(money, trophies)
     }
     
     local success, err = pcall(function()
-        local response = game:GetService("HttpService"):PostAsync(webhookUrl, game:GetService("HttpService"):JSONEncode(data), Enum.HttpContentType.ApplicationJson)
+        game:GetService("HttpService"):PostAsync(webhookUrl, game:GetService("HttpService"):JSONEncode(data), Enum.HttpContentType.ApplicationJson)
     end)
 
     if not success then
@@ -84,6 +84,19 @@ spawn(function()
         sendWebhookNotification(moneyValue, trophiesValue)
     end
 end)
+
+local function antiAFK()
+    while true do
+        wait(300) -- รอ 5 นาที (300 วินาที)
+        local player = game.Players.LocalPlayer
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            player.Character.Humanoid:Move(Vector3.new(0, 0, 0), true) -- ส่งคำสั่งให้ Humanoid เคลื่อนที่
+        end
+    end
+end
+
+-- เรียกใช้ฟังก์ชัน antiAFK
+spawn(antiAFK)
 
 -- โหลดสคริปต์จาก URL
 local success, err = pcall(function()
