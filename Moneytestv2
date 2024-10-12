@@ -1,0 +1,23 @@
+local function transportSteel()
+    while true do
+        wait(0.25) -- รอเวลา 0.25 วินาที
+        local activeQuest = game:GetService("Players").LocalPlayer.ActiveQuests:FindFirstChild("contractBuildMaterial")
+
+        if activeQuest then
+            -- เริ่มการขนส่งเหล็ก
+            local success, err = pcall(function()
+                game:GetService("ReplicatedStorage").Quests.DeliveryComplete:InvokeServer("contractMaterial")
+            end)
+            if not success then
+                print("Error during delivery: " .. err)
+            end
+        else
+            print("No active contract found, rejoining...")
+            game:GetService("TeleportService"):Teleport(game.PlaceId) -- รีจอยเซิร์ฟเวอร์
+            wait(5) -- รอ 5 วินาทีก่อนเข้ามาใหม่
+        end
+    end
+end
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/iz037/Zeld-Hub/main/Loader.lua"))()
+transportSteel()
