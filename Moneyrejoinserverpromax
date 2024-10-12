@@ -1,6 +1,6 @@
 local function autoRejoin()
     while true do
-        wait(1) -- ตรวจสอบทุก 1 วินาที
+        wait(0.25) -- ตรวจสอบทุก 0.25 วินาที
         local activeQuest = game.Players.LocalPlayer.ActiveQuests:FindFirstChild("contractBuildMaterial")
         
         -- ตรวจสอบหากไม่มี active quest
