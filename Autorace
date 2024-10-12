@@ -1,0 +1,53 @@
+getfenv().Trophies = (state and true or false)
+game:GetService("ReplicatedStorage").Race.LeaveRace:InvokeServer()
+getfenv().showui = getfenv().Trophies
+
+spawn(function()
+    while true do
+        task.wait(1) -- รอ 1 วินาทีก่อนทำงานใหม่
+        if not getfenv().showui and game:GetService("Players").LocalPlayer.PlayerGui.ScreenGui.Money:FindFirstChild("Rep") then
+            game:GetService("Players").LocalPlayer.PlayerGui.ScreenGui.Money.Rep:Destroy()
+        elseif getfenv().showui then
+            local repLabel = game:GetService("Players").LocalPlayer.PlayerGui.ScreenGui.Money:FindFirstChild("Rep")
+            if not repLabel then
+                repLabel = game:GetService("Players").LocalPlayer.PlayerGui.ScreenGui.Money.CashLabel:Clone()
+                repLabel.Name = "Rep"
+                repLabel.Parent = game:GetService("Players").LocalPlayer.PlayerGui.ScreenGui.Money
+                repLabel.Position = UDim2.new(3, 0, 0, 0)
+            else
+                repLabel.Text = "Rep:" .. tostring(game:GetService("Players").LocalPlayer.variables.rep.Value)
+            end
+        end
+    end
+end)
+
+while getfenv().Trophies do
+    task.wait(0.5) -- รอ 0.5 วินาทีก่อนตรวจสอบใหม่
+    pcall(function()
+        if game.Players.LocalPlayer.Character.Humanoid.Sit == true then
+            if game:GetService("Players").LocalPlayer.variables.race.Value == "none" then
+                task.wait()
+                game:GetService("ReplicatedStorage").Race.TimeTrial:InvokeServer("circuit", 5)
+            else
+                for _, vehicle in pairs(game:GetService("Workspace").Vehicles:GetDescendants()) do
+                    if vehicle.Name == "Player" and vehicle.Value == game.Players.LocalPlayer then
+                        for _, part in pairs(game:GetService("Workspace").Races["circuit"].detects:GetChildren()) do
+                            if part.ClassName == "Part" and part:FindFirstChild("TouchInterest") then
+                                part.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+                                firetouchinterest(vehicle.Parent.Parent.PrimaryPart, part, 0)
+                                firetouchinterest(vehicle.Parent.Parent.PrimaryPart, part, 1)
+                            end
+                        end
+                        game:GetService("Workspace").Races["circuit"].timeTrial:FindFirstChildOfClass("IntValue").finish.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+                        firetouchinterest(vehicle.Parent.Parent.PrimaryPart, game:GetService("Workspace").Races["circuit"].timeTrial:FindFirstChildOfClass("IntValue").finish, 0)
+                        firetouchinterest(vehicle.Parent.Parent.PrimaryPart, game:GetService("Workspace").Races["circuit"].timeTrial:FindFirstChildOfClass("IntValue").finish, 1)
+                    end
+                end
+            end
+        elseif game.Players.LocalPlayer.Character.Humanoid.Sit == false then
+            game:GetService("ReplicatedStorage").Vehicles.GetNearestSpot:InvokeServer(game:GetService("Players").LocalPlayer.variables.carId.Value)
+            wait(0.5)
+            game:GetService("ReplicatedStorage").Vehicles.EnterVehicleEvent:InvokeServer()
+        end
+    end)
+end
