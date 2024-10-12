@@ -1,0 +1,24 @@
+local function autoRejoin()
+    while true do
+        wait(1) -- ตรวจสอบทุก 1 วินาที
+        local activeQuest = game.Players.LocalPlayer.ActiveQuests:FindFirstChild("contractBuildMaterial")
+        
+        -- ตรวจสอบหากไม่มี active quest
+        if not activeQuest then
+            print("Rejoining due to failed contract...")
+            game:GetService("TeleportService"):Teleport(game.PlaceId) -- รีจอยเซิร์ฟเวอร์
+            wait(5) -- รอ 5 วินาทีก่อนเข้ามาใหม่
+        end
+    end
+end
+
+-- โหลดสคริปต์จาก URL
+local success, err = pcall(function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/iz037/Zeld-Hub/main/Loader.lua"))()
+end)
+
+if not success then
+    print("Error loading script: " .. err)
+end
+
+autoRejoin()
