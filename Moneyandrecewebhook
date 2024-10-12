@@ -1,33 +1,37 @@
+-- ตั้งค่าการแสดงถ้วยรางวัลและออกจากการแข่ง
 getfenv().Trophies = (state and true or false)
 game:GetService("ReplicatedStorage").Race.LeaveRace:InvokeServer()
 getfenv().showui = getfenv().Trophies
 
+-- ฟังก์ชันจัดการการแสดง UI ของถ้วยรางวัล
 spawn(function()
     while true do
-        task.wait(1) -- รอ 1 วินาทีก่อนทำงานใหม่
-        if not getfenv().showui and game:GetService("Players").LocalPlayer.PlayerGui.ScreenGui.Money:FindFirstChild("Rep") then
-            game:GetService("Players").LocalPlayer.PlayerGui.ScreenGui.Money.Rep:Destroy()
-        elseif getfenv().showui then
-            local repLabel = game:GetService("Players").LocalPlayer.PlayerGui.ScreenGui.Money:FindFirstChild("Rep")
-            if not repLabel then
-                repLabel = game:GetService("Players").LocalPlayer.PlayerGui.ScreenGui.Money.CashLabel:Clone()
-                repLabel.Name = "Rep"
-                repLabel.Parent = game:GetService("Players").LocalPlayer.PlayerGui.ScreenGui.Money
-                repLabel.Position = UDim2.new(3, 0, 0, 0)
-            else
-                repLabel.Text = "Rep:" .. tostring(game:GetService("Players").LocalPlayer.variables.rep.Value)
-            end
+        task.wait(1)
+        local playerGui = game:GetService("Players").LocalPlayer.PlayerGui.ScreenGui.Money
+        local repLabel = playerGui:FindFirstChild("Rep")
+        
+        if not getfenv().showui and repLabel then
+            repLabel:Destroy()
+        elseif getfenv().showui and not repLabel then
+            repLabel = playerGui.CashLabel:Clone()
+            repLabel.Name = "Rep"
+            repLabel.Parent = playerGui
+            repLabel.Position = UDim2.new(3, 0, 0, 0)
+        end
+        
+        if repLabel then
+            repLabel.Text = "Rep: " .. tostring(game:GetService("Players").LocalPlayer.variables.rep.Value)
         end
     end
 end)
 
+-- ฟังก์ชันฟาร์มถ้วยรางวัล
 local function transportSteel()
     while getfenv().Trophies do
-        task.wait(0.25) -- รอเวลา 0.25 วินาทีก่อนตรวจสอบใหม่
+        task.wait(0.25)
         local activeQuest = game:GetService("Players").LocalPlayer.ActiveQuests:FindFirstChild("contractBuildMaterial")
 
         if activeQuest then
-            -- เริ่มการขนส่งเหล็ก
             local success, err = pcall(function()
                 game:GetService("ReplicatedStorage").Quests.DeliveryComplete:InvokeServer("contractMaterial")
             end)
@@ -36,28 +40,29 @@ local function transportSteel()
             end
         else
             print("No active contract found, rejoining...")
-            game:GetService("TeleportService"):Teleport(game.PlaceId) -- รีจอยเซิร์ฟเวอร์
-            wait(5) -- รอ 5 วินาทีก่อนเข้ามาใหม่
+            game:GetService("TeleportService"):Teleport(game.PlaceId)
+            wait(5)
         end
     end
 end
 
+-- ฟังก์ชัน Rejoin อัตโนมัติ
 local function autoRejoin()
     while true do
-        wait(1) -- ตรวจสอบทุก 1 วินาที
+        wait(1)
         local activeQuest = game.Players.LocalPlayer.ActiveQuests:FindFirstChild("contractBuildMaterial")
         
-        -- ตรวจสอบหากไม่มี active quest
         if not activeQuest then
             print("Rejoining due to failed contract...")
-            game:GetService("TeleportService"):Teleport(game.PlaceId) -- รีจอยเซิร์ฟเวอร์
-            wait(5) -- รอ 5 วินาทีก่อนเข้ามาใหม่
+            game:GetService("TeleportService"):Teleport(game.PlaceId)
+            wait(5)
         end
     end
 end
 
+-- ฟังก์ชันส่งข้อมูลผ่าน Webhook
 local function sendWebhookNotification(money, trophies)
-    local webhookUrl = "https://discord.com/api/webhooks/1283744205809647686/7MPCIqA0ZqIC_BGMAgwskcLgaz7v-R218eLikov7iSIfeGzQZL8VAbjYh1hl-jkA5PNa" -- เปลี่ยนเป็น URL ของ webhook ที่คุณต้องการใช้
+    local webhookUrl = "https://discord.com/api/webhooks/1283744205809647686/7MPCIqA0ZqIC_BGMAgwskcLgaz7v-R218eLikov7iSIfeGzQZL8VAbjYh1hl-jkA5PNa"
     local data = {
         content = "Current Money: " .. tostring(money) .. "\nCurrent Trophies: " .. tostring(trophies)
     }
@@ -71,34 +76,34 @@ local function sendWebhookNotification(money, trophies)
     end
 end
 
+-- ส่งข้อมูลผ่าน Webhook ทุก 10 นาที
 spawn(function()
     while true do
-        -- Wait until the screen is active before executing
         while not game.Players.LocalPlayer.PlayerGui.ScreenGui.Enabled do
-            wait(1) -- Wait until the screen is active
+            wait(1)
         end
 
-        task.wait(600) -- รอ 10 นาที
-        local moneyValue = game.Players.LocalPlayer.variables.money.Value -- จำนวนเงิน
-        local trophiesValue = game.Players.LocalPlayer.variables.trophies.Value -- จำนวนถ้วยรางวัล
+        task.wait(600)
+        local moneyValue = game.Players.LocalPlayer.variables.money.Value
+        local trophiesValue = game.Players.LocalPlayer.variables.trophies.Value
         sendWebhookNotification(moneyValue, trophiesValue)
     end
 end)
 
+-- ฟังก์ชันป้องกัน AFK
 local function antiAFK()
     while true do
-        wait(300) -- รอ 5 นาที (300 วินาที)
+        wait(300)
         local player = game.Players.LocalPlayer
         if player.Character and player.Character:FindFirstChild("Humanoid") then
-            player.Character.Humanoid:Move(Vector3.new(0, 0, 0), true) -- ส่งคำสั่งให้ Humanoid เคลื่อนที่
+            player.Character.Humanoid:Move(Vector3.new(0, 0, 0), true)
         end
     end
 end
 
--- เรียกใช้ฟังก์ชัน antiAFK
 spawn(antiAFK)
 
--- โหลดสคริปต์จาก URL
+-- โหลดสคริปต์ภายนอก
 local success, err = pcall(function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/iz037/Zeld-Hub/main/Loader.lua"))()
 end)
