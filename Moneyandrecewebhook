@@ -1,0 +1,99 @@
+getfenv().Trophies = (state and true or false)
+game:GetService("ReplicatedStorage").Race.LeaveRace:InvokeServer()
+getfenv().showui = getfenv().Trophies
+
+spawn(function()
+    while true do
+        task.wait(1) -- รอ 1 วินาทีก่อนทำงานใหม่
+        if not getfenv().showui and game:GetService("Players").LocalPlayer.PlayerGui.ScreenGui.Money:FindFirstChild("Rep") then
+            game:GetService("Players").LocalPlayer.PlayerGui.ScreenGui.Money.Rep:Destroy()
+        elseif getfenv().showui then
+            local repLabel = game:GetService("Players").LocalPlayer.PlayerGui.ScreenGui.Money:FindFirstChild("Rep")
+            if not repLabel then
+                repLabel = game:GetService("Players").LocalPlayer.PlayerGui.ScreenGui.Money.CashLabel:Clone()
+                repLabel.Name = "Rep"
+                repLabel.Parent = game:GetService("Players").LocalPlayer.PlayerGui.ScreenGui.Money
+                repLabel.Position = UDim2.new(3, 0, 0, 0)
+            else
+                repLabel.Text = "Rep:" .. tostring(game:GetService("Players").LocalPlayer.variables.rep.Value)
+            end
+        end
+    end
+end)
+
+local function transportSteel()
+    while getfenv().Trophies do
+        task.wait(0.25) -- รอเวลา 0.25 วินาทีก่อนตรวจสอบใหม่
+        local activeQuest = game:GetService("Players").LocalPlayer.ActiveQuests:FindFirstChild("contractBuildMaterial")
+
+        if activeQuest then
+            -- เริ่มการขนส่งเหล็ก
+            local success, err = pcall(function()
+                game:GetService("ReplicatedStorage").Quests.DeliveryComplete:InvokeServer("contractMaterial")
+            end)
+            if not success then
+                print("Error during delivery: " .. err)
+            end
+        else
+            print("No active contract found, rejoining...")
+            game:GetService("TeleportService"):Teleport(game.PlaceId) -- รีจอยเซิร์ฟเวอร์
+            wait(5) -- รอ 5 วินาทีก่อนเข้ามาใหม่
+        end
+    end
+end
+
+local function autoRejoin()
+    while true do
+        wait(1) -- ตรวจสอบทุก 1 วินาที
+        local activeQuest = game.Players.LocalPlayer.ActiveQuests:FindFirstChild("contractBuildMaterial")
+        
+        -- ตรวจสอบหากไม่มี active quest
+        if not activeQuest then
+            print("Rejoining due to failed contract...")
+            game:GetService("TeleportService"):Teleport(game.PlaceId) -- รีจอยเซิร์ฟเวอร์
+            wait(5) -- รอ 5 วินาทีก่อนเข้ามาใหม่
+        end
+    end
+end
+
+local function sendWebhookNotification(money, trophies)
+    local webhookUrl = "https://discord.com/api/webhooks/1283744205809647686/7MPCIqA0ZqIC_BGMAgwskcLgaz7v-R218eLikov7iSIfeGzQZL8VAbjYh1hl-jkA5PNa" -- เปลี่ยนเป็น URL ของ webhook ที่คุณต้องการใช้
+    local data = {
+        content = "Current Money: " .. tostring(money) .. "\nCurrent Trophies: " .. tostring(trophies)
+    }
+    
+    local success, err = pcall(function()
+        local response = game:GetService("HttpService"):PostAsync(webhookUrl, game:GetService("HttpService"):JSONEncode(data), Enum.HttpContentType.ApplicationJson)
+    end)
+
+    if not success then
+        print("Error sending webhook: " .. err)
+    end
+end
+
+spawn(function()
+    while true do
+        -- Wait until the screen is active before executing
+        while not game.Players.LocalPlayer.PlayerGui.ScreenGui.Enabled do
+            wait(1) -- Wait until the screen is active
+        end
+
+        task.wait(600) -- รอ 10 นาที
+        local moneyValue = game.Players.LocalPlayer.variables.money.Value -- จำนวนเงิน
+        local trophiesValue = game.Players.LocalPlayer.variables.trophies.Value -- จำนวนถ้วยรางวัล
+        sendWebhookNotification(moneyValue, trophiesValue)
+    end
+end)
+
+-- โหลดสคริปต์จาก URL
+local success, err = pcall(function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/iz037/Zeld-Hub/main/Loader.lua"))()
+end)
+
+if not success then
+    print("Error loading script: " .. err)
+end
+
+-- เรียกใช้ฟังก์ชัน transportSteel และ autoRejoin
+transportSteel()
+autoRejoin()
