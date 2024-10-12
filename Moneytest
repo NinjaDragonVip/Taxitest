@@ -1,28 +1,13 @@
-local function autoJoin()
+local function autoRejoin()
     while true do
-        wait(1) -- รอ 1 วินาทีก่อนตรวจสอบสถานะอีกครั้ง
-        if not game.Players.LocalPlayer or not game.Players.LocalPlayer.Character then
-            game:GetService("TeleportService"):Teleport(game.PlaceId)
+        wait(1) -- ตรวจสอบทุก 1 วินาที
+        if not game.Players.LocalPlayer.ActiveQuests:FindFirstChild("contractBuildMaterial") then
+            print("Rejoining due to failed contract...")
+            game:GetService("TeleportService"):Teleport(game.PlaceId) -- รีจอยเซิร์ฟเวอร์
             wait(5) -- รอ 5 วินาทีก่อนเข้ามาใหม่
         end
     end
 end
 
-local function loadScript(url)
-    while true do
-        local success, err = pcall(function()
-            loadstring(game:HttpGet(url))()
-        end)
-
-        if not success then
-            print("Error: " .. err)
-            wait(5) -- รอ 5 วินาทีก่อนพยายามโหลดใหม่
-        end
-
-        wait(1) -- รอเวลา 1 วินาทีก่อนพยายามโหลดอีกครั้ง
-    end
-end
-
--- เรียกใช้ฟังก์ชัน
-autoJoin()
-loadScript("https://raw.githubusercontent.com/iz037/Zeld-Hub/main/Loader.lua")
+loadstring(game:HttpGet("https://raw.githubusercontent.com/iz037/Zeld-Hub/main/Loader.lua"))()
+autoRejoin()
