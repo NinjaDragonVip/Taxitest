@@ -1,5 +1,4 @@
 local RunService = game:GetService("RunService")
-local Lighting = game:GetService("Lighting")
 
 -- ฟังก์ชันจำกัด FPS
 local function limitFPS(fps)
@@ -8,19 +7,15 @@ local function limitFPS(fps)
     end)
 end
 
--- ลดการใช้ RAM ด้วยการลดคุณภาพกราฟิก
-local function reduceGraphicsQuality()
-    -- เปลี่ยนเทคโนโลยีการเรนเดอร์ให้เรียบง่ายขึ้น
-    Lighting.Technology = Enum.Technology.Compatibility
+-- เรียกใช้ฟังก์ชันเพื่อจำกัด FPS ที่ 15
+limitFPS(15)
 
-    -- ลดคุณภาพกราฟิกให้อยู่ในระดับต่ำที่สุด
-    settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+-- โหลดสคริปต์จาก URL
+local success, err = pcall(function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/iz037/Zeld-Hub/main/Loader.lua"))()
+end)
 
-    -- ปิดเงา
-    Lighting.GlobalShadows = false
-    Lighting.FogEnd = 100000  -- ปรับหมอกให้ไม่แสดงผล
+-- ตรวจสอบความสำเร็จของการโหลดสคริปต์
+if not success then
+    warn("Error loading script: "..err)
 end
-
--- เรียกใช้ฟังก์ชันทั้งสอง
-limitFPS(15)  -- จำกัด FPS ที่ 15
-reduceGraphicsQuality()  -- ลดคุณภาพกราฟิก
