@@ -1,0 +1,210 @@
+-- Ultra-Silent + Anti-Lag + Anti-AFK + Auto-Rejoin + Stealth2 + No Animation + Camera Lock
+
+-- ====== ตั้งค่า ======
+local DELIVER_MIN = 5      -- min deliveries per loop
+local DELIVER_MAX = 6      -- max deliveries per loop
+local LOOP_SLEEP_MIN = 0.001
+local LOOP_SLEEP_MAX = 0.004
+local ERROR_BACKOFF_BASE = 0.05
+local MAX_BACKOFF = 2
+local FPS_TARGET = 240
+local AFK_MOVE_INTERVAL = 55
+local REJOIN_CHECK_INTERVAL = 8
+local MAX_DELIVER_PER_MIN = 2000
+
+-- Services
+local Players = game:GetService("Players")
+local RS = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
+local TeleportService = game:GetService("TeleportService")
+
+local player = Players.LocalPlayer
+local QuestFolder = player and player:FindFirstChild("ActiveQuests")
+
+getfenv().test2 = true
+local deliveriesThisMinute = 0
+local lastMinuteTick = os.time()
+local backoff = ERROR_BACKOFF_BASE
+
+-- ====== ANTI LAG / FPS BOOST ======
+pcall(function()
+    if setfpscap then setfpscap(FPS_TARGET) end
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") then
+            v.Enabled = false
+        elseif v:IsA("Explosion") then
+            v:Destroy()
+        elseif v:IsA("BasePart") then
+            v.Material = Enum.Material.SmoothPlastic
+        end
+    end
+    Lighting.GlobalShadows = false
+    Lighting.Brightness = 1
+    Lighting.FogEnd = 1e9
+end)
+
+-- ====== HELPER ======
+local function rndDelay()
+    task.wait(math.random() * (LOOP_SLEEP_MAX - LOOP_SLEEP_MIN) + LOOP_SLEEP_MIN)
+end
+
+local function silentDelay()
+    task.wait(math.random(1,3)/1000)
+end
+
+local function safeInvoke(fn, ...)
+    local ok, res = pcall(fn, ...)
+    if not ok then
+        task.wait(math.min(backoff, MAX_BACKOFF))
+        backoff = math.min(MAX_BACKOFF, backoff*1.6)
+    else
+        backoff = math.max(ERROR_BACKOFF_BASE, backoff*0.85)
+    end
+    return ok, res
+end
+
+local function rateLimitGuard(count)
+    local now = os.time()
+    if now ~= lastMinuteTick then
+        lastMinuteTick = now
+        deliveriesThisMinute = 0
+    end
+    deliveriesThisMinute = deliveriesThisMinute + count
+    if deliveriesThisMinute > MAX_DELIVER_PER_MIN then
+        task.wait(1 + math.random()*2)
+        deliveriesThisMinute = 0
+    end
+end
+
+-- ====== ANTI-AFK ======
+local function antiAfkEnable()
+    pcall(function()
+        if player then
+            player.Idled:Connect(function()
+                pcall(function()
+                    local vu = game:GetService("VirtualUser")
+                    vu:Button2Down(Vector2.new(0,0))
+                    task.wait(0.05)
+                    vu:Button2Up(Vector2.new(0,0))
+                end)
+            end)
+        end
+        task.spawn(function()
+            while getfenv().test2 do
+                task.wait(AFK_MOVE_INTERVAL)
+                pcall(function()
+                    local vu2 = game:GetService("VirtualUser")
+                    vu2:CaptureController()
+                    vu2:ClickButton2(Vector2.new(0,0))
+                end)
+            end
+        end)
+    end)
+end
+
+-- ====== AUTO REJOIN ======
+local function tryRejoin()
+    pcall(function()
+        local placeId = game.PlaceId
+        pcall(function() TeleportService:Teleport(placeId, player) end)
+    end)
+end
+
+task.spawn(function()
+    while true do
+        task.wait(REJOIN_CHECK_INTERVAL)
+        if not getfenv().test2 then break end
+        if not Players.LocalPlayer or not Players.LocalPlayer.Parent then
+            tryRejoin()
+            task.wait(3)
+        end
+    end
+end)
+
+antiAfkEnable()
+
+-- ====== STOP ANIMATION + CAMERA LOCK ======
+local function StopAnimation(char)
+    pcall(function()
+        local animate = char:FindFirstChild("Animate")
+        if animate then animate.Disabled = true end
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            for _, track in pairs(hum:GetPlayingAnimationTracks()) do
+                track:Stop()
+            end
+        end
+    end)
+end
+
+local function LockCamera(char)
+    local cam = workspace.CurrentCamera
+    if cam then
+        cam.CameraType = Enum.CameraType.Fixed
+        cam.CFrame = CFrame.new(char.HumanoidRootPart.Position + Vector3.new(0,5,0), char.HumanoidRootPart.Position)
+    end
+end
+
+local function SetupCharacter(char)
+    char:WaitForChild("HumanoidRootPart")
+    StopAnimation(char)
+    LockCamera(char)
+end
+
+if player.Character then
+    SetupCharacter(player.Character)
+end
+
+player.CharacterAdded:Connect(function(char)
+    SetupCharacter(char)
+end)
+
+-- ====== ULTRA-SILENT AUTO FARM ======
+task.spawn(function()
+    repeat task.wait(0.2) until player and player:FindFirstChild("ActiveQuests")
+    QuestFolder = player.ActiveQuests
+
+    local function startContractIfNeeded()
+        if not QuestFolder:FindFirstChild("contractBuildMaterial") then
+            pcall(function()
+                local cur = QuestFolder:FindFirstChildOfClass("StringValue")
+                if cur then
+                    safeInvoke(function(n) return RS.Quests.Contracts.CancelContract:InvokeServer(n) end, cur.Name)
+                end
+            end)
+            safeInvoke(function() return RS.Quests.Contracts.StartContract:InvokeServer("contractBuildMaterial") end)
+            local t0 = tick()
+            repeat
+                task.wait(0.02)
+                if tick()-t0 > 6 then
+                    safeInvoke(function() return RS.Quests.Contracts.StartContract:InvokeServer("contractBuildMaterial") end)
+                    t0 = tick()
+                end
+            until QuestFolder:FindFirstChild("contractBuildMaterial")
+        end
+    end
+
+    while getfenv().test2 do
+        task.wait()
+        startContractIfNeeded()
+
+        repeat
+            task.wait(math.random(6,12)/1000)
+            local deliverCount = math.random(DELIVER_MIN,DELIVER_MAX)
+            rateLimitGuard(deliverCount)
+            task.spawn(function()
+                for i=1,deliverCount do
+                    safeInvoke(function() return RS.Quests.DeliveryComplete:InvokeServer("contractMaterial") end)
+                    task.wait(math.random()*(LOOP_SLEEP_MAX-LOOP_SLEEP_MIN)+LOOP_SLEEP_MIN)
+                end
+            end)
+            silentDelay()
+        until QuestFolder.contractBuildMaterial and QuestFolder.contractBuildMaterial.Value=="!pw5pi3ps2"
+
+        safeInvoke(function() return RS.Quests.Contracts.CompleteContract:InvokeServer() end)
+        task.wait(math.random(40,90)/1000)
+    end
+end)
+
+print("Ultra-Silent AFK Farm loaded: Endless + AntiAFK + AutoRejoin + Stealth2 + Animation Off + Camera Lock active.")
