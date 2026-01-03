@@ -1,0 +1,178 @@
+-- Anti AFK
+local vu = game:GetService("VirtualUser")
+game:GetService("Players").LocalPlayer.Idled:Connect(function()
+    vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    wait(WAIT_VLONG)
+    vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+end)
+
+-- Anti Staff
+local Players = game:GetService("Players")
+local GROUP_ID = 11987919
+local RANK_LIMIT = 149
+
+local function checkStaff(player)
+    if player:GetRankInGroup(GROUP_ID) > RANK_LIMIT then
+        Players.LocalPlayer:Kick("Auto Kicked Due to Staff Member "..player.Name.." joined your game")
+    else
+        warn(player.Name, "just joined the game")
+    end
+end
+
+Players.PlayerAdded:Connect(checkStaff)
+
+spawn(function()
+    warn("Anti Staff is now running")
+    while wait(WAIT_LONG) do
+        for _, v in pairs(Players:GetPlayers()) do
+            if v:GetRankInGroup(GROUP_ID) > RANK_LIMIT then
+                Players.LocalPlayer:Kick("Auto Kicked Due to Staff Member "..v.Name.." is in your game")
+            end
+        end
+    end
+end)
+
+-- UI
+local library = loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/Marco8642/science/main/ui%20libs2", true
+))()
+
+local mainWindow = library:CreateWindow({ text = "Taxi Boss - Auto Features" })
+
+------------------------------------------------
+-- AUTO COLLECT PARTS
+------------------------------------------------
+mainWindow:AddToggle("Auto Collect Parts", function(state)
+    getfenv().partcollector = state
+    while getfenv().partcollector do
+        wait()
+        for _, loc in pairs(workspace.ItemSpawnLocations:GetChildren()) do
+            if not getfenv().partcollector then break end
+
+            local timer = tick()
+            repeat wait()
+                Players.LocalPlayer.Character:PivotTo(loc.CFrame + Vector3.new(0,251,0))
+            until tick() - timer >= 2
+
+            for _, v in pairs(workspace.ItemSpawnLocations:GetDescendants()) do
+                if v.Name == "TouchInterest" then
+                    firetouchinterest(
+                        Players.LocalPlayer.Character.HumanoidRootPart,
+                        v.Parent, 0
+                    )
+                    firetouchinterest(
+                        Players.LocalPlayer.Character.HumanoidRootPart,
+                        v.Parent, 1
+                    )
+                end
+            end
+        end
+    end
+end)
+
+------------------------------------------------
+-- AUTO MONEY
+------------------------------------------------
+mainWindow:AddToggle("Auto Money", function(state)
+    getfenv().test2 = state
+
+    pcall(function()
+        local aq = Players.LocalPlayer.ActiveQuests
+        local s = aq:FindFirstChildOfClass("StringValue")
+        if s then
+            game.ReplicatedStorage.Quests.Contracts.CancelContract:InvokeServer(s.Name)
+        end
+    end)
+
+    while getfenv().test2 do
+        wait()
+
+        local aq = Players.LocalPlayer.ActiveQuests
+        if not aq:FindFirstChild("contractBuildMaterial") then
+            game.ReplicatedStorage.Quests.Contracts.StartContract
+                :InvokeServer("contractBuildMaterial")
+            repeat wait() until aq:FindFirstChild("contractBuildMaterial")
+        end
+
+        repeat wait()
+            task.spawn(function()
+                game.ReplicatedStorage.Quests.DeliveryComplete
+                    :InvokeServer("contractMaterial")
+                game.ReplicatedStorage.Quests.DeliveryComplete
+                    :InvokeServer("contractMaterial")
+                game.ReplicatedStorage.Quests.DeliveryComplete
+                    :InvokeServer("contractMaterial")
+            end)
+        until aq.contractBuildMaterial.Value == "!pw5pi3ps2"
+              or not getfenv().test2
+
+        wait()
+        game.ReplicatedStorage.Quests.Contracts.CompleteContract:InvokeServer()
+    end
+end)
+
+------------------------------------------------
+-- AUTO TROPHIES
+------------------------------------------------
+mainWindow:AddToggle("Auto Trophies", function(state)
+    getfenv().Trophies = state
+    game.ReplicatedStorage.Race.LeaveRace:InvokeServer()
+
+    while getfenv().Trophies do
+        wait()
+        pcall(function()
+            local hum = Players.LocalPlayer.Character.Humanoid
+            if hum.Sit then
+                if Players.LocalPlayer.variables.race.Value == "none" then
+                    wait()
+                    game.ReplicatedStorage.Race.TimeTrial
+                        :InvokeServer("circuit", 5)
+                else
+                    for _, b in pairs(workspace.Vehicles:GetDescendants()) do
+                        if b.Name == "Player" and b.Value == Players.LocalPlayer then
+                            local car = b.Parent.Parent
+                            for _, v in pairs(workspace.Races.circuit.detects:GetChildren()) do
+                                if v:IsA("Part") and v:FindFirstChild("TouchInterest") then
+                                    v.CFrame =
+                                        Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+                                    firetouchinterest(car.PrimaryPart, v, 0)
+                                    firetouchinterest(car.PrimaryPart, v, 1)
+                                end
+                            end
+                            local finish =
+                                workspace.Races.circuit.timeTrial
+                                    :FindFirstChildOfClass("IntValue").finish
+                            finish.CFrame =
+                                Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+                            firetouchinterest(car.PrimaryPart, finish, 0)
+                            firetouchinterest(car.PrimaryPart, finish, 1)
+                        end
+                    end
+                end
+            else
+                game.ReplicatedStorage.Vehicles.GetNearestSpot
+                    :InvokeServer(Players.LocalPlayer.variables.carId.Value)
+                wait(WAIT_LONG)
+                game.ReplicatedStorage.Vehicles.EnterVehicleEvent:InvokeServer()
+            end
+        end)
+    end
+end)
+
+------------------------------------------------
+-- AUTO UPGRADE OFFICE
+------------------------------------------------
+mainWindow:AddToggle("Auto Upgrade Office", function(state)
+    getfenv().ofs = state
+    while getfenv().ofs do
+        wait()
+        if not Players.LocalPlayer:FindFirstChild("Office") then
+            game.ReplicatedStorage.Company.StartOffice:InvokeServer()
+            wait(WAIT_MED)
+        end
+        if Players.LocalPlayer.Office:GetAttribute("level") < 16 then
+            game.ReplicatedStorage.Company.SkipOfficeQuest:InvokeServer()
+            game.ReplicatedStorage.Company.UpgradeOffice:InvokeServer()
+        end
+    end
+end)
