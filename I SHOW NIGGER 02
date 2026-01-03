@@ -1,0 +1,240 @@
+------------------------------------------------
+-- GLOBAL WAIT CONFIG (สำคัญ)
+------------------------------------------------
+local WAIT_DEFAULT = 0.03
+local WAIT_MED     = 0.2
+local WAIT_LONG    = 0.5
+local WAIT_VLONG   = 1
+
+------------------------------------------------
+-- SERVICES
+------------------------------------------------
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+
+------------------------------------------------
+-- Anti AFK
+------------------------------------------------
+local vu = game:GetService("VirtualUser")
+LocalPlayer.Idled:Connect(function()
+    vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    wait(WAIT_VLONG)
+    vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+end)
+
+------------------------------------------------
+-- Anti Staff
+------------------------------------------------
+local GROUP_ID = 11987919
+local RANK_LIMIT = 149
+
+local function checkStaff(player)
+    if player:GetRankInGroup(GROUP_ID) > RANK_LIMIT then
+        LocalPlayer:Kick("Auto Kicked Due to Staff Member "..player.Name)
+    end
+end
+
+Players.PlayerAdded:Connect(checkStaff)
+
+task.spawn(function()
+    while wait(WAIT_LONG) do
+        for _, v in ipairs(Players:GetPlayers()) do
+            if v:GetRankInGroup(GROUP_ID) > RANK_LIMIT then
+                LocalPlayer:Kick("Auto Kicked Due to Staff Member "..v.Name)
+            end
+        end
+    end
+end)
+
+------------------------------------------------
+-- UI LIB
+------------------------------------------------
+local library = loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/Marco8642/science/main/ui%20libs2", true
+))()
+
+------------------------------------------------
+-- MAIN WINDOW (AUTO)
+------------------------------------------------
+local mainWindow = library:CreateWindow({
+    text = "Taxi Boss - Auto Features"
+})
+
+------------------------------------------------
+-- AUTO COLLECT PARTS
+------------------------------------------------
+mainWindow:AddToggle("Auto Collect Parts", function(state)
+    getfenv().partcollector = state
+    while getfenv().partcollector do
+        wait()
+        for _, loc in ipairs(workspace.ItemSpawnLocations:GetChildren()) do
+            if not getfenv().partcollector then break end
+
+            local timer = tick()
+            repeat wait()
+                LocalPlayer.Character:PivotTo(loc.CFrame + Vector3.new(0,251,0))
+            until tick() - timer >= 2
+
+            for _, v in ipairs(workspace.ItemSpawnLocations:GetDescendants()) do
+                if v.Name == "TouchInterest" then
+                    firetouchinterest(LocalPlayer.Character.HumanoidRootPart, v.Parent, 0)
+                    firetouchinterest(LocalPlayer.Character.HumanoidRootPart, v.Parent, 1)
+                end
+            end
+        end
+    end
+end)
+
+------------------------------------------------
+-- AUTO MONEY
+------------------------------------------------
+mainWindow:AddToggle("Auto Money", function(state)
+    getfenv().test2 = state
+
+    while getfenv().test2 do
+        wait()
+
+        local aq = LocalPlayer.ActiveQuests
+        if not aq:FindFirstChild("contractBuildMaterial") then
+            ReplicatedStorage.Quests.Contracts.StartContract
+                :InvokeServer("contractBuildMaterial")
+            repeat wait() until aq:FindFirstChild("contractBuildMaterial")
+        end
+
+        repeat wait()
+            ReplicatedStorage.Quests.DeliveryComplete
+                :InvokeServer("contractMaterial")
+        until aq.contractBuildMaterial.Value == "!pw5pi3ps2"
+           or not getfenv().test2
+
+        wait()
+        ReplicatedStorage.Quests.Contracts.CompleteContract:InvokeServer()
+    end
+end)
+
+------------------------------------------------
+-- AUTO TROPHIES
+------------------------------------------------
+mainWindow:AddToggle("Auto Trophies", function(state)
+    getfenv().Trophies = state
+    ReplicatedStorage.Race.LeaveRace:InvokeServer()
+
+    while getfenv().Trophies do
+        wait()
+        pcall(function()
+            local hum = LocalPlayer.Character.Humanoid
+            if hum.Sit then
+                ReplicatedStorage.Race.TimeTrial:InvokeServer("circuit", 5)
+            else
+                ReplicatedStorage.Vehicles.GetNearestSpot
+                    :InvokeServer(LocalPlayer.variables.carId.Value)
+                wait(WAIT_LONG)
+                ReplicatedStorage.Vehicles.EnterVehicleEvent:InvokeServer()
+            end
+        end)
+    end
+end)
+
+------------------------------------------------
+-- AUTO UPGRADE OFFICE
+------------------------------------------------
+mainWindow:AddToggle("Auto Upgrade Office", function(state)
+    getfenv().ofs = state
+    while getfenv().ofs do
+        wait()
+        if not LocalPlayer:FindFirstChild("Office") then
+            ReplicatedStorage.Company.StartOffice:InvokeServer()
+            wait(WAIT_MED)
+        end
+        if LocalPlayer.Office:GetAttribute("level") < 16 then
+            ReplicatedStorage.Company.SkipOfficeQuest:InvokeServer()
+            ReplicatedStorage.Company.UpgradeOffice:InvokeServer()
+        end
+    end
+end)
+
+------------------------------------------------
+-- MISC WINDOW
+------------------------------------------------
+local miscWindow = library:CreateWindow({
+    text = "Taxi Boss - Miscellaneous"
+})
+
+------------------------------------------------
+-- VEHICLE BUYER
+------------------------------------------------
+miscWindow:AddLabel("Vehicle Buyer")
+
+miscWindow:AddBox("Enter Vehicle Name", function(object, focus)
+    if focus then
+        local carName = object.Text:lower()
+        for _, v in ipairs(require(ReplicatedStorage.ModuleLists.CarList)) do
+            if string.find(v.name:lower(), carName) then
+                ReplicatedStorage.DataStore.PurchaseVehicle:InvokeServer(v.id)
+                break
+            end
+        end
+    end
+end)
+
+------------------------------------------------
+-- UNLOCK TAXI RADAR
+------------------------------------------------
+miscWindow:AddButton("Unlock Taxi Radar", function()
+    LocalPlayer.variables.vip.Value = true
+end)
+
+------------------------------------------------
+-- SHOW PLAYER STATS
+------------------------------------------------
+miscWindow:AddButton("Show Players Stats", function()
+    game:GetService("VirtualInputManager")
+        :SendKeyEvent(true, Enum.KeyCode.F9, false, game)
+
+    for _, p in ipairs(Players:GetPlayers()) do
+        print("====", p.Name, "====")
+        for _, b in ipairs(p.Data.OwnedCars:GetChildren()) do
+            if b:IsA("BoolValue") and b.Value then
+                print("Car ID:", b.Name)
+            end
+        end
+    end
+end)
+
+------------------------------------------------
+-- RESET
+------------------------------------------------
+miscWindow:AddButton("Reset Character", function()
+    LocalPlayer.Character:BreakJoints()
+end)
+
+------------------------------------------------
+-- CLEAN MAP
+------------------------------------------------
+miscWindow:AddButton("Remove AI Vehicles", function()
+    if workspace:FindFirstChild("Tracks") then
+        workspace.Tracks:Destroy()
+    end
+end)
+
+miscWindow:AddButton("Remove Locked Area Barriers", function()
+    if workspace:FindFirstChild("AreaLocked") then
+        workspace.AreaLocked:Destroy()
+    end
+end)
+
+------------------------------------------------
+-- FPS BOOST
+------------------------------------------------
+miscWindow:AddToggle("Boost FPS", function(state)
+    if state then
+        settings().Rendering.QualityLevel = 1
+        game.Lighting.GlobalShadows = false
+        for _, v in ipairs(workspace:GetDescendants()) do
+            if v:IsA("ParticleEmitter") or v:IsA("Trail") then
+                v:Destroy()
+            end
+        end
+    end
+end)
